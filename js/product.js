@@ -156,6 +156,91 @@ const urlParams = new URLSearchParams(window.location.search);
 const productId = urlParams.get("id");
 console.log(productId);
 
+// document.getElementById("submitButton").addEventListener("click", async (e) => {
+//   e.preventDefault();
+
+//   const button = document.getElementById("submitButton");
+//   const spinner = document.createElement("span");
+//   spinner.classList.add("spinner");
+//   button.appendChild(spinner);
+
+//   // Select all spans with a data-id attribute inside the div with id 'selectedCategories'
+//   const spans = document.querySelectorAll("#selectedCategories span[data-id]");
+
+//   // Create an array to hold the results
+//   let spanData = [];
+
+//   spans.forEach((span) => {
+//     // Push an object with both the text content and data-id into the array
+//     spanData.push({
+//       text: span.textContent,
+//       dataId: span.getAttribute("data-id"),
+//     });
+//   });
+
+//   console.log(spanData[0].dataId);
+
+//   formData.append("name", productName.value);
+//   formData.append("description", productDescription.value);
+//   formData.append("BasePrice", basePrice.value);
+//   formData.append("StockQuantity", StockQuantity.value);
+//   formData.append("Discount", discount.value);
+//   formData.append("DiscountType", discountType.value);
+//   formData.append("categoryId", spanData[0].dataId);
+
+//   const selectedRadio = document.querySelector(
+//     'input[name="packaging"]:checked'
+//   );
+//   if (selectedRadio) {
+//     formData.append("PackagingType", selectedRadio.value);
+//   }
+
+//   try {
+//     const url = productId
+//       ? `https://african-store.onrender.com/api/v1/product/${productId}`
+//       : `https://african-store.onrender.com/api/v1/product/create/${spanData[0].dataId}`;
+
+//     const response = await fetch(url, {
+//       method: productId ? "PUT" : "POST",
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//       body: formData,
+//     });
+
+//     console.log("created");
+//     if (response.ok) {
+//       console.log("Nice");
+
+//       Swal.fire({
+//         title: "Success!",
+//         text: `Product ${productId ? "updated" : "created"} successfully`,
+//         icon: "success",
+//         showConfirmButton: false,
+//         timer: 2000,
+//       }).then((swa) => {
+//         console.log(swa);
+//         Swal.close();
+//         window.location.reload();
+//       });
+//     } else {
+//       const error = await response.json();
+//       Swal.fire({
+//         title: "Error!",
+//         text: error.message || "Operation failed",
+//         icon: "error",
+//       });
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     Swal.fire({
+//       title: "Error!",
+//       text: "Network error occurred",
+//       icon: "error",
+//     });
+//   }
+// });
+
 document.getElementById("submitButton").addEventListener("click", async (e) => {
   e.preventDefault();
 
@@ -164,21 +249,54 @@ document.getElementById("submitButton").addEventListener("click", async (e) => {
   spinner.classList.add("spinner");
   button.appendChild(spinner);
 
-  // Select all spans with a data-id attribute inside the div with id 'selectedCategories'
+  // Get all selected category spans
   const spans = document.querySelectorAll("#selectedCategories span[data-id]");
-
-  // Create an array to hold the results
   let spanData = [];
-
   spans.forEach((span) => {
-    // Push an object with both the text content and data-id into the array
     spanData.push({
       text: span.textContent,
       dataId: span.getAttribute("data-id"),
     });
   });
 
-  console.log(spanData[0].dataId);
+  // Validate required fields
+  if (
+    !productName.value.trim() ||
+    !productDescription.value.trim() ||
+    !basePrice.value.trim() ||
+    !StockQuantity.value.trim() ||
+    !discount.value.trim() ||
+    !discountType.value.trim()
+  ) {
+    Swal.fire("Error", "Please fill out all required fields.", "error");
+    spinner.remove();
+    return;
+  }
+
+  // Validate category: exactly one category must be selected
+  if (spanData.length !== 1) {
+    Swal.fire("Error", "Please select exactly one category.", "error");
+    spinner.remove();
+    return;
+  }
+
+  // Validate discount:
+  // If discount type is not "no discount", then discount must be > 0.
+  if (
+    discountType.value.toLowerCase() !== "no discount" &&
+    parseFloat(discount.value) > 0
+  ) {
+    Swal.fire(
+      "Error",
+      "Please enter a valid discount value for the selected discount type.",
+      "error"
+    );
+    spinner.remove();
+    return;
+  }
+
+  // Clear any previous FormData and reinitialize it
+  let formData = new FormData();
 
   formData.append("name", productName.value);
   formData.append("description", productDescription.value);
@@ -195,11 +313,12 @@ document.getElementById("submitButton").addEventListener("click", async (e) => {
     formData.append("PackagingType", selectedRadio.value);
   }
 
-  try {
-    const url = productId
-      ? `https://african-store.onrender.com/api/v1/product/${productId}`
-      : `https://african-store.onrender.com/api/v1/product/create/${spanData[0].dataId}`;
+  // Determine endpoint URL (update or create)
+  const url = productId
+    ? `https://african-store.onrender.com/api/v1/product/${productId}`
+    : `https://african-store.onrender.com/api/v1/product/create/${spanData[0].dataId}`;
 
+  try {
     const response = await fetch(url, {
       method: productId ? "PUT" : "POST",
       headers: {
@@ -208,18 +327,15 @@ document.getElementById("submitButton").addEventListener("click", async (e) => {
       body: formData,
     });
 
-    console.log("created");
     if (response.ok) {
-      console.log("Nice");
-
+      const data = await response.json();
       Swal.fire({
         title: "Success!",
         text: `Product ${productId ? "updated" : "created"} successfully`,
         icon: "success",
         showConfirmButton: false,
         timer: 2000,
-      }).then((swa) => {
-        console.log(swa);
+      }).then(() => {
         Swal.close();
         window.location.reload();
       });
@@ -238,6 +354,8 @@ document.getElementById("submitButton").addEventListener("click", async (e) => {
       text: "Network error occurred",
       icon: "error",
     });
+  } finally {
+    spinner.remove();
   }
 });
 

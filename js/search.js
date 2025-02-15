@@ -6,10 +6,9 @@ let allProducts = []; // Store fetched products
 (async function fetchProductList() {
   try {
     const response = await fetch(
-      "https://african-store.onrender.com/api/v1/product",
+      "https://african-store.onrender.com/api/v1/product/normal",
       {
         method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
       }
     );
 

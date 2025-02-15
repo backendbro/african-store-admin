@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     setTimeout(() => {
-      window.location.href = "https://www.africanmarkets.eu/account.html";
+      window.location.href = "/account.html";
     }, 2000);
   }
 });
